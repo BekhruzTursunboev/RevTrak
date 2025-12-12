@@ -1,0 +1,127 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  users       User[]
+  transactions Transaction[]
+  tasks       Task[]
+  notifications Notification[]
+  clients     Client[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      String   @default("member")
+  companyId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  @@index([email])
+  @@index([companyId])
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  date        DateTime
+  amount      Float
+  category    String
+  notes       String?
+  type        String   // "income" or "expense"
+  companyId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  @@index([companyId])
+  @@index([date])
+  @@index([category])
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("pending") // "pending", "in_progress", "completed", "overdue"
+  priority    String   @default("medium") // "low", "medium", "high", "urgent"
+  dueDate     DateTime?
+  completedAt DateTime?
+  companyId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  @@index([companyId])
+  @@index([dueDate])
+  @@index([status])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // "transaction", "task", "revenue", "deadline"
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  companyId String
+  createdAt DateTime @default(now())
+  
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  @@index([companyId])
+  @@index([read])
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  companyName String?
+  notes       String?
+  companyId   String
+  totalDue    Float    @default(0)
+  totalPaid   Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  payments ClientPayment[]
+  
+  @@index([companyId])
+  @@index([name])
+}
+
+model ClientPayment {
+  id          String   @id @default(cuid())
+  clientId    String
+  amount      Float
+  paymentDate DateTime
+  notes       String?
+  createdAt   DateTime @default(now())
+  
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  @@index([clientId])
+  @@index([paymentDate])
+}
+
