@@ -111,15 +111,18 @@ export default function ClientsPage() {
         resetForm()
         fetchClients()
       } else {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to save client")
+        const errorData = await response.json().catch(() => ({}))
+        const errorMessage = errorData.message || errorData.error || "Failed to save client"
+        throw new Error(errorMessage)
       }
     } catch (error: any) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to save client"
       toast({
         title: "Error",
-        description: error.message || "Failed to save client",
+        description: errorMessage,
         variant: "destructive",
       })
+      console.error("Client save error:", error)
     }
   }
 

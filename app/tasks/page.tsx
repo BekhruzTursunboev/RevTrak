@@ -85,14 +85,18 @@ export default function TasksPage() {
         resetForm()
         fetchTasks()
       } else {
-        throw new Error("Failed to save task")
+        const errorData = await response.json().catch(() => ({}))
+        const errorMessage = errorData.message || errorData.error || "Failed to save task"
+        throw new Error(errorMessage)
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to save task"
       toast({
         title: "Error",
-        description: "Failed to save task",
+        description: errorMessage,
         variant: "destructive",
       })
+      console.error("Task save error:", error)
     }
   }
 

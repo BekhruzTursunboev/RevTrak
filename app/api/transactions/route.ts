@@ -66,12 +66,23 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    // Ensure default company exists
-    await prisma.company.upsert({
-      where: { id: DEFAULT_COMPANY_ID },
-      update: {},
-      create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
-    })
+    // Ensure default company exists (with error handling)
+    try {
+      await prisma.company.upsert({
+        where: { id: DEFAULT_COMPANY_ID },
+        update: {},
+        create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
+      })
+    } catch (dbError) {
+      console.error("Database connection error:", dbError)
+      return NextResponse.json(
+        { 
+          error: "Database connection failed", 
+          message: "Please check your DATABASE_URL and ensure the database is set up. Run 'npx prisma db push' to initialize the database."
+        },
+        { status: 500 }
+      )
+    }
 
     const body = await request.json()
     const { date, amount, category, notes, type } = transactionSchema.parse(body)
@@ -81,26 +92,32 @@ export async function POST(request: Request) {
         date: new Date(date),
         amount: type === "income" ? Math.abs(amount) : -Math.abs(amount),
         category,
-        notes,
+        notes: notes || null,
         type,
         companyId: DEFAULT_COMPANY_ID,
       },
     })
 
-    // Create notification for large transactions
-    if (Math.abs(amount) > 10000) {
-      await prisma.notification.create({
-        data: {
-          type: "transaction",
-          title: "Large Transaction",
-          message: `A ${type} of ${Math.abs(amount).toLocaleString()} was recorded in ${category}`,
-          companyId: DEFAULT_COMPANY_ID,
-        },
-      })
+    // Create notification for large transactions (optional, don't fail if this fails)
+    try {
+      if (Math.abs(amount) > 10000) {
+        await prisma.notification.create({
+          data: {
+            type: "transaction",
+            title: "Large Transaction",
+            message: `A ${type} of ${Math.abs(amount).toLocaleString()} was recorded in ${category}`,
+            companyId: DEFAULT_COMPANY_ID,
+          },
+        })
+      }
+    } catch (notifError) {
+      // Don't fail transaction creation if notification fails
+      console.error("Failed to create notification:", notifError)
     }
 
     return NextResponse.json(transaction)
   } catch (error) {
+    console.error("Transaction creation error:", error)
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid input", details: error.errors },
@@ -108,7 +125,10 @@ export async function POST(request: Request) {
       )
     }
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error occurred"
+      },
       { status: 500 }
     )
   }

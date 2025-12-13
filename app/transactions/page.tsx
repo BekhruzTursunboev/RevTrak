@@ -87,14 +87,18 @@ export default function TransactionsPage() {
         resetForm()
         fetchTransactions()
       } else {
-        throw new Error("Failed to save transaction")
+        const errorData = await response.json().catch(() => ({}))
+        const errorMessage = errorData.message || errorData.error || "Failed to save transaction"
+        throw new Error(errorMessage)
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to save transaction"
       toast({
         title: "Error",
-        description: "Failed to save transaction",
+        description: errorMessage,
         variant: "destructive",
       })
+      console.error("Transaction save error:", error)
     }
   }
 
