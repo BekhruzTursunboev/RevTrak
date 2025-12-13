@@ -1,34 +1,38 @@
-# RevTrak
+# RevTrak - Revenue & Project Tracking
 
-Smart revenue and task tracking system designed for real estate teams and small businesses. The platform reduces missed deadlines, removes spreadsheet dependency, and provides real-time operational visibility.
+Simple revenue and project tracking application.
 
-## 🚀 Overview
-RevTrak merges revenue monitoring with task and project management. It uses typed logic, automated validation, and modular architecture to deliver a clean and reliable workflow system.
+## Features
 
-## 🔑 Features
-- Full CRUD operations for tasks and transactions  
-- Automated deadline tracking with alert triggers  
-- AI-assisted task categorization and anomaly detection  
-- Central dashboard with real-time revenue metrics  
-- Export to CSV and PDF  
-- Responsive UI (desktop + mobile)  
-- JSON-based local storage layer
+- 📊 Dashboard with revenue analytics
+- 💰 Transaction tracking (income/expenses)
+- ✅ Task management
+- 👥 Client management
+- 📈 Charts and reports
+- 📄 Export to CSV/PDF
 
-## 🛠 Architecture
-- Modular folder structure  
-- Service-based logic separation  
-- Validation utilities for all payloads  
-- Internal API wrappers  
-- Component-based UI rendering
+## Setup
 
-## 📌 Use Cases
-- Track agent tasks and due dates  
-- Monitor revenue streams and changes  
-- Maintain audit-friendly transaction history  
-- Prevent workflow delays  
-- Replace scattered Excel/CSV workflows
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-## ▶️ Run Locally
-```bash
-npm install
-npm start
+2. **Set up database:**
+   - Create a PostgreSQL database
+   - Set `DATABASE_URL` environment variable
+   - Run: `npx prisma db push`
+
+3. **Run development server:**
+   ```bash
+   npm run dev
+   ```
+
+## Deployment
+
+1. Push to GitHub
+2. Connect to Vercel
+3. Set `DATABASE_URL` environment variable in Vercel
+4. Deploy
+
+The app works without authentication - all features are accessible immediately.
