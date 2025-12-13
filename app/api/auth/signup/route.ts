@@ -49,14 +49,50 @@ export async function POST(request: Request) {
       userId: company.users[0].id,
     })
   } catch (error) {
+    console.error("Signup error:", error)
+    
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid input", details: error.errors },
         { status: 400 }
       )
     }
+    
+    // Check for database connection errors
+    if (error instanceof Error) {
+      if (error.message.includes("Can't reach database server") || 
+          error.message.includes("P1001") ||
+          error.message.includes("Environment variable") ||
+          error.message.includes("DATABASE_URL")) {
+        return NextResponse.json(
+          { 
+            error: "Database connection failed", 
+            message: "Please check your DATABASE_URL environment variable and ensure the database is set up."
+          },
+          { status: 500 }
+        )
+      }
+      
+      // Check for schema errors
+      if (error.message.includes("does not exist") || 
+          error.message.includes("P1001") ||
+          error.message.includes("relation") ||
+          error.message.includes("table")) {
+        return NextResponse.json(
+          { 
+            error: "Database schema not initialized", 
+            message: "Please run 'npx prisma db push' to initialize the database schema."
+          },
+          { status: 500 }
+        )
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error occurred"
+      },
       { status: 500 }
     )
   }
