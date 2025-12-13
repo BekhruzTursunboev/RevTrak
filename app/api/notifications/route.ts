@@ -4,11 +4,15 @@ import { DEFAULT_COMPANY_ID } from "@/lib/constants"
 
 export async function GET() {
   try {
-    await prisma.company.upsert({
-      where: { id: DEFAULT_COMPANY_ID },
-      update: {},
-      create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
-    })
+    try {
+      await prisma.company.upsert({
+        where: { id: DEFAULT_COMPANY_ID },
+        update: {},
+        create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
+      })
+    } catch (dbError) {
+      return NextResponse.json([])
+    }
 
     const notifications = await prisma.notification.findMany({
       where: {
@@ -20,10 +24,8 @@ export async function GET() {
 
     return NextResponse.json(notifications)
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    console.error("Notifications error:", error)
+    return NextResponse.json([])
   }
 }
 

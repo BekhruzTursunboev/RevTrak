@@ -26,9 +26,26 @@ export default function DashboardPage() {
       if (res.ok) {
         const data = await res.json()
         setDashboardData(data)
+      } else {
+        // If API fails, set empty data
+        setDashboardData({
+          revenue: { total: 0, expenses: 0, net: 0 },
+          chartData: [],
+          categoryBreakdown: [],
+          taskStats: { total: 0, completed: 0, pending: 0, inProgress: 0, overdue: 0 },
+          recentTransactions: [],
+        })
       }
     } catch (error) {
       console.error("Failed to fetch dashboard data", error)
+      // Set empty data on error
+      setDashboardData({
+        revenue: { total: 0, expenses: 0, net: 0 },
+        chartData: [],
+        categoryBreakdown: [],
+        taskStats: { total: 0, completed: 0, pending: 0, inProgress: 0, overdue: 0 },
+        recentTransactions: [],
+      })
     } finally {
       setLoading(false)
     }

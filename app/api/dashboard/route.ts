@@ -4,12 +4,24 @@ import { DEFAULT_COMPANY_ID } from "@/lib/constants"
 
 export async function GET() {
   try {
-    // Ensure default company exists
-    await prisma.company.upsert({
-      where: { id: DEFAULT_COMPANY_ID },
-      update: {},
-      create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
-    })
+    // Ensure default company exists (with error handling)
+    try {
+      await prisma.company.upsert({
+        where: { id: DEFAULT_COMPANY_ID },
+        update: {},
+        create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
+      })
+    } catch (dbError) {
+      console.error("Database connection error:", dbError)
+      // Return empty data if database is not available
+      return NextResponse.json({
+        revenue: { total: 0, expenses: 0, net: 0 },
+        chartData: [],
+        categoryBreakdown: [],
+        taskStats: { total: 0, completed: 0, pending: 0, inProgress: 0, overdue: 0 },
+        recentTransactions: [],
+      })
+    }
 
     const companyId = DEFAULT_COMPANY_ID
 
@@ -104,8 +116,17 @@ export async function GET() {
       recentTransactions,
     })
   } catch (error) {
+    console.error("Dashboard error:", error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error",
+        revenue: { total: 0, expenses: 0, net: 0 },
+        chartData: [],
+        categoryBreakdown: [],
+        taskStats: { total: 0, completed: 0, pending: 0, inProgress: 0, overdue: 0 },
+        recentTransactions: [],
+      },
       { status: 500 }
     )
   }
