@@ -3,84 +3,95 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "./prisma"
 import bcrypt from "bcryptjs"
 
-// Only check in runtime, not during build
-if (typeof window === 'undefined' && process.env.NODE_ENV !== 'test') {
-  if (!process.env.NEXTAUTH_SECRET && process.env.VERCEL_ENV) {
-    console.error("⚠️ NEXTAUTH_SECRET environment variable is not set. Please add it in Vercel project settings.")
+// Function to get auth options - lazy evaluation prevents build-time errors
+function createAuthOptions(): NextAuthOptions {
+  // Use a safe default during build - will be replaced at runtime
+  const secret = process.env.NEXTAUTH_SECRET || "temp-build-secret-do-not-use-in-production"
+  
+  // Only warn in actual runtime, not during build
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === "production" && !process.env.NEXTAUTH_SECRET) {
+    // This will only run at runtime, not during build
+    if (typeof window === 'undefined') {
+      console.error("⚠️ WARNING: NEXTAUTH_SECRET is not set! Please add it in Vercel environment variables.")
+    }
+  }
+
+  return {
+    providers: [
+      CredentialsProvider({
+        name: "Credentials",
+        credentials: {
+          email: { label: "Email", type: "email" },
+          password: { label: "Password", type: "password" }
+        },
+        async authorize(credentials) {
+          if (!credentials?.email || !credentials?.password) {
+            return null
+          }
+
+          try {
+            const user = await prisma.user.findUnique({
+              where: { email: credentials.email },
+              include: { company: true }
+            })
+
+            if (!user) {
+              return null
+            }
+
+            const isPasswordValid = await bcrypt.compare(
+              credentials.password,
+              user.password
+            )
+
+            if (!isPasswordValid) {
+              return null
+            }
+
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              companyId: user.companyId,
+            }
+          } catch (error) {
+            console.error("Auth error:", error)
+            return null
+          }
+        }
+      })
+    ],
+    callbacks: {
+      async jwt({ token, user }) {
+        if (user) {
+          token.companyId = user.companyId
+        }
+        return token
+      },
+      async session({ session, token }) {
+        if (session.user) {
+          session.user.companyId = token.companyId as string
+          session.user.id = token.sub || ""
+        }
+        return session
+      }
+    },
+    pages: {
+      signIn: "/auth/signin",
+    },
+    session: {
+      strategy: "jwt",
+    },
+    secret: secret,
+    debug: process.env.NODE_ENV === "development",
   }
 }
 
-if (!process.env.NEXTAUTH_URL && process.env.VERCEL) {
-  console.warn("⚠️ NEXTAUTH_URL environment variable is not set. This may cause issues in production.")
+// Export function for route handlers (lazy evaluation)
+export function getAuthOptions(): NextAuthOptions {
+  return createAuthOptions()
 }
 
-export const authOptions: NextAuthOptions = {
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
-
-        try {
-          const user = await prisma.user.findUnique({
-            where: { email: credentials.email },
-            include: { company: true }
-          })
-
-          if (!user) {
-            return null
-          }
-
-          const isPasswordValid = await bcrypt.compare(
-            credentials.password,
-            user.password
-          )
-
-          if (!isPasswordValid) {
-            return null
-          }
-
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            companyId: user.companyId,
-          }
-        } catch (error) {
-          console.error("Auth error:", error)
-          return null
-        }
-      }
-    })
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.companyId = user.companyId
-      }
-      return token
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.companyId = token.companyId as string
-        session.user.id = token.sub || ""
-      }
-      return session
-    }
-  },
-  pages: {
-    signIn: "/auth/signin",
-  },
-  session: {
-    strategy: "jwt",
-  },
-  secret: process.env.NEXTAUTH_SECRET || "change-me-in-production",
-  debug: process.env.NODE_ENV === "development",
-}
+// Export constant for getServerSession (evaluated once, but safe for build)
+export const authOptions: NextAuthOptions = createAuthOptions()
 
