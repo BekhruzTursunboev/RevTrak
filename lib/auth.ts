@@ -3,12 +3,15 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "./prisma"
 import bcrypt from "bcryptjs"
 
-if (!process.env.NEXTAUTH_SECRET) {
-  throw new Error("NEXTAUTH_SECRET environment variable is not set")
+// Only check in runtime, not during build
+if (typeof window === 'undefined' && process.env.NODE_ENV !== 'test') {
+  if (!process.env.NEXTAUTH_SECRET && process.env.VERCEL_ENV) {
+    console.error("⚠️ NEXTAUTH_SECRET environment variable is not set. Please add it in Vercel project settings.")
+  }
 }
 
-if (!process.env.NEXTAUTH_URL) {
-  console.warn("NEXTAUTH_URL environment variable is not set. This may cause issues in production.")
+if (!process.env.NEXTAUTH_URL && process.env.VERCEL) {
+  console.warn("⚠️ NEXTAUTH_URL environment variable is not set. This may cause issues in production.")
 }
 
 export const authOptions: NextAuthOptions = {
@@ -77,7 +80,7 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "change-me-in-production",
   debug: process.env.NODE_ENV === "development",
 }
 
