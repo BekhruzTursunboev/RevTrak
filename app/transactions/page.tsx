@@ -1,8 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSession } from "next-auth/react"
-import { redirect } from "next/navigation"
 import { Navbar } from "@/components/layout/navbar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,7 +23,6 @@ import { useToast } from "@/hooks/use-toast"
 import { categorizeTransaction } from "@/lib/ai"
 
 export default function TransactionsPage() {
-  const { data: session, status } = useSession()
   const { toast } = useToast()
   const [transactions, setTransactions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,13 +39,8 @@ export default function TransactionsPage() {
   })
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      redirect("/auth/signin")
-    }
-    if (status === "authenticated") {
-      fetchTransactions()
-    }
-  }, [status, search, categoryFilter])
+    fetchTransactions()
+  }, [search, categoryFilter])
 
   const fetchTransactions = async () => {
     try {
@@ -170,7 +162,7 @@ export default function TransactionsPage() {
     new Set(transactions.map((t) => t.category))
   ).sort()
 
-  if (status === "loading" || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>

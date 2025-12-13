@@ -1,8 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSession } from "next-auth/react"
-import { redirect } from "next/navigation"
 import { Navbar } from "@/components/layout/navbar"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { RevenueChart } from "@/components/dashboard/revenue-chart"
@@ -14,19 +12,13 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession()
   const { toast } = useToast()
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      redirect("/auth/signin")
-    }
-    if (status === "authenticated") {
-      fetchDashboardData()
-    }
-  }, [status])
+    fetchDashboardData()
+  }, [])
 
   const fetchDashboardData = async () => {
     try {
@@ -70,7 +62,7 @@ export default function DashboardPage() {
     }
   }
 
-  if (status === "loading" || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>

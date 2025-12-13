@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
@@ -19,18 +17,22 @@ const clientSchema = z.object({
   totalDue: z.number().optional(),
 })
 
+import { DEFAULT_COMPANY_ID } from "@/lib/constants"
+
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    // Ensure default company exists
+    await prisma.company.upsert({
+      where: { id: DEFAULT_COMPANY_ID },
+      update: {},
+      create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
+    })
 
     const { searchParams } = new URL(request.url)
     const search = searchParams.get("search")
 
     const where: any = {
-      companyId: session.user.companyId,
+      companyId: DEFAULT_COMPANY_ID,
     }
 
     if (search) {
@@ -62,10 +64,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    // Ensure default company exists
+    await prisma.company.upsert({
+      where: { id: DEFAULT_COMPANY_ID },
+      update: {},
+      create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
+    })
 
     const body = await request.json()
     const validated = clientSchema.parse(body)
@@ -79,7 +83,7 @@ export async function POST(request: Request) {
         companyName: companyName && companyName.trim() !== "" ? companyName.trim() : null,
         notes: notes && notes.trim() !== "" ? notes.trim() : null,
         totalDue: totalDue || 0,
-        companyId: session.user.companyId,
+        companyId: DEFAULT_COMPANY_ID,
       },
     })
 

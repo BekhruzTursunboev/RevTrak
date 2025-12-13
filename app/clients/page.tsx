@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/layout/navbar"
 import { Button } from "@/components/ui/button"
@@ -40,7 +39,6 @@ interface Client {
 }
 
 export default function ClientsPage() {
-  const { data: session, status } = useSession()
   const { toast } = useToast()
   const router = useRouter()
   const [clients, setClients] = useState<Client[]>([])
@@ -82,14 +80,8 @@ export default function ClientsPage() {
   }, [search])
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/signin")
-      return
-    }
-    if (status === "authenticated") {
-      fetchClients()
-    }
-  }, [status, router, fetchClients])
+    fetchClients()
+  }, [fetchClients])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -217,7 +209,7 @@ export default function ClientsPage() {
     setEditingClient(null)
   }
 
-  if (status === "loading" || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>

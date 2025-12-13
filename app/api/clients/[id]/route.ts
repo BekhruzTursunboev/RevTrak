@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { DEFAULT_COMPANY_ID } from "@/lib/constants"
 
 const clientSchema = z.object({
   name: z.string().min(1).optional(),
@@ -24,10 +23,11 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    await prisma.company.upsert({
+      where: { id: DEFAULT_COMPANY_ID },
+      update: {},
+      create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
+    })
 
     const body = await request.json()
     const data = clientSchema.parse(body)
@@ -36,7 +36,7 @@ export async function PUT(
       where: { id: params.id },
     })
 
-    if (!client || client.companyId !== session.user.companyId) {
+    if (!client) {
       return NextResponse.json({ error: "Not found" }, { status: 404 })
     }
 
@@ -73,16 +73,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const client = await prisma.client.findUnique({
       where: { id: params.id },
     })
 
-    if (!client || client.companyId !== session.user.companyId) {
+    if (!client) {
       return NextResponse.json({ error: "Not found" }, { status: 404 })
     }
 

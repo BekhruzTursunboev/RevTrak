@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { DEFAULT_COMPANY_ID } from "@/lib/constants"
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    await prisma.company.upsert({
+      where: { id: DEFAULT_COMPANY_ID },
+      update: {},
+      create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
+    })
 
     const notifications = await prisma.notification.findMany({
       where: {
-        companyId: session.user.companyId,
+        companyId: DEFAULT_COMPANY_ID,
       },
       orderBy: { createdAt: "desc" },
       take: 50,
@@ -29,10 +29,11 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    await prisma.company.upsert({
+      where: { id: DEFAULT_COMPANY_ID },
+      update: {},
+      create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
+    })
 
     const body = await request.json()
     const { id, read } = body
@@ -46,7 +47,7 @@ export async function PATCH(request: Request) {
       // Mark all as read
       await prisma.notification.updateMany({
         where: {
-          companyId: session.user.companyId,
+          companyId: DEFAULT_COMPANY_ID,
           read: false,
         },
         data: { read: true },

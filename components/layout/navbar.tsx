@@ -1,14 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Bell, LogOut, Menu, X } from "lucide-react"
+import { Bell, Menu, X } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
 
 export function Navbar() {
-  const { data: session } = useSession()
   const { toast } = useToast()
   const [notifications, setNotifications] = useState<any[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -16,12 +14,10 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
-    if (session) {
-      fetchNotifications()
-      const interval = setInterval(fetchNotifications, 30000) // Check every 30 seconds
-      return () => clearInterval(interval)
-    }
-  }, [session])
+    fetchNotifications()
+    const interval = setInterval(fetchNotifications, 30000) // Check every 30 seconds
+    return () => clearInterval(interval)
+  }, [])
 
   const fetchNotifications = async () => {
     try {
@@ -48,12 +44,6 @@ export function Navbar() {
       console.error("Failed to mark notification as read", error)
     }
   }
-
-  const handleSignOut = async () => {
-    await signOut({ callbackUrl: "/auth/signin" })
-  }
-
-  if (!session) return null
 
   return (
     <nav className="border-b bg-white sticky top-0 z-50">
@@ -122,10 +112,6 @@ export function Navbar() {
                 </div>
               )}
             </div>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Sign Out</span>
-            </Button>
             <Button
               variant="ghost"
               size="icon"

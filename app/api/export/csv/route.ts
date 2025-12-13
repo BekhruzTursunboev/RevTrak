@@ -1,21 +1,21 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { DEFAULT_COMPANY_ID } from "@/lib/constants"
 
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    await prisma.company.upsert({
+      where: { id: DEFAULT_COMPANY_ID },
+      update: {},
+      create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
+    })
 
     const { searchParams } = new URL(request.url)
     const type = searchParams.get("type") || "transactions"
 
     if (type === "transactions") {
       const transactions = await prisma.transaction.findMany({
-        where: { companyId: session.user.companyId },
+        where: { companyId: DEFAULT_COMPANY_ID },
         orderBy: { date: "desc" },
       })
 
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
       })
     } else if (type === "tasks") {
       const tasks = await prisma.task.findMany({
-        where: { companyId: session.user.companyId },
+        where: { companyId: DEFAULT_COMPANY_ID },
         orderBy: { createdAt: "desc" },
       })
 

@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { DEFAULT_COMPANY_ID } from "@/lib/constants"
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    // Ensure default company exists
+    await prisma.company.upsert({
+      where: { id: DEFAULT_COMPANY_ID },
+      update: {},
+      create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
+    })
 
-    const companyId = session.user.companyId
+    const companyId = DEFAULT_COMPANY_ID
 
     // Get transactions
     const transactions = await prisma.transaction.findMany({

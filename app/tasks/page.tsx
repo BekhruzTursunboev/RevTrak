@@ -1,8 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSession } from "next-auth/react"
-import { redirect } from "next/navigation"
 import { Navbar } from "@/components/layout/navbar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,7 +23,6 @@ import { useToast } from "@/hooks/use-toast"
 import { prioritizeTasks } from "@/lib/ai"
 
 export default function TasksPage() {
-  const { data: session, status } = useSession()
   const { toast } = useToast()
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -44,13 +41,8 @@ export default function TasksPage() {
   const [prioritizedTasks, setPrioritizedTasks] = useState<any[]>([])
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      redirect("/auth/signin")
-    }
-    if (status === "authenticated") {
-      fetchTasks()
-    }
-  }, [status, statusFilter, priorityFilter])
+    fetchTasks()
+  }, [statusFilter, priorityFilter])
 
   const fetchTasks = async () => {
     try {
@@ -206,7 +198,7 @@ export default function TasksPage() {
     }
   }
 
-  if (status === "loading" || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>

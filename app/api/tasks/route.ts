@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
@@ -12,19 +10,23 @@ const taskSchema = z.object({
   dueDate: z.string().nullable().optional(),
 })
 
+import { DEFAULT_COMPANY_ID } from "@/lib/constants"
+
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    // Ensure default company exists
+    await prisma.company.upsert({
+      where: { id: DEFAULT_COMPANY_ID },
+      update: {},
+      create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
+    })
 
     const { searchParams } = new URL(request.url)
     const status = searchParams.get("status")
     const priority = searchParams.get("priority")
 
     const where: any = {
-      companyId: session.user.companyId,
+      companyId: DEFAULT_COMPANY_ID,
     }
 
     if (status) {
@@ -65,10 +67,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    // Ensure default company exists
+    await prisma.company.upsert({
+      where: { id: DEFAULT_COMPANY_ID },
+      update: {},
+      create: { id: DEFAULT_COMPANY_ID, name: "Default Company" },
+    })
 
     const body = await request.json()
     const { title, description, status, priority, dueDate } = taskSchema.parse(body)
@@ -80,7 +84,7 @@ export async function POST(request: Request) {
         status: status || "pending",
         priority: priority || "medium",
         dueDate: dueDate ? new Date(dueDate) : null,
-        companyId: session.user.companyId,
+        companyId: DEFAULT_COMPANY_ID,
       },
     })
 
@@ -91,7 +95,7 @@ export async function POST(request: Request) {
           type: "task",
           title: "New Urgent Task",
           message: `Task "${title}" is due soon`,
-          companyId: session.user.companyId,
+          companyId: DEFAULT_COMPANY_ID,
         },
       })
     }
