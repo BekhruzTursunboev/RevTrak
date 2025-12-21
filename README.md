@@ -10,6 +10,8 @@ Simple revenue and project tracking application.
 - 👥 Client management
 - 📈 Charts and reports
 - 📄 Export to CSV/PDF
+  
+---
 
 ## Setup
 
@@ -36,4 +38,5 @@ Simple revenue and project tracking application.
 4. Deploy
 
 The app works without authentication - all features are accessible immediately.
+
 
