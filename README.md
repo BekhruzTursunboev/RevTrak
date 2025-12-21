@@ -36,3 +36,4 @@ Simple revenue and project tracking application.
 4. Deploy
 
 The app works without authentication - all features are accessible immediately.
+
