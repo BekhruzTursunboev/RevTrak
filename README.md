@@ -40,3 +40,4 @@ Simple revenue and project tracking application.
 The app works without authentication - all features are accessible immediately.
 
 
+
