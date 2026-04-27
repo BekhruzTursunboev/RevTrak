@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Recommended for development to catch potential issues
   reactStrictMode: true,
   images: {
     domains: [],
