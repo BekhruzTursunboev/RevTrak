@@ -10,6 +10,14 @@ Simple revenue and project tracking application.
 - 👥 Client management
 - 📈 Charts and reports
 - 📄 Export to CSV/PDF
+
+## Tech Stack
+
+- **Framework**: Next.js 14
+- **Language**: TypeScript
+- **Database**: PostgreSQL with Prisma ORM
+- **Styling**: Tailwind CSS
+- **Deployment**: Vercel
   
 ---
 
